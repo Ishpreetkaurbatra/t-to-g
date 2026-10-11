@@ -1,0 +1,6 @@
+{
+  "name": "T→G — TREND TO GROWTH",
+  "description": "Find the trends that matter to your business — and know what to do next. Trend Intelligence and Business Action platform with human expert validation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
