@@ -1,15 +1,17 @@
-import {
+import type {
   TrendItem,
   BusinessProfile,
   SmartAlert,
   ActionPlan,
   Experiment,
+} from './demoData.ts';
+import {
   DEMO_TRENDS,
   INITIAL_BUSINESS_PROFILE,
   INITIAL_SMART_ALERTS,
   INITIAL_ACTION_PLANS,
   INITIAL_EXPERIMENTS,
-} from './demoData';
+} from './demoData.ts';
 
 class DataStore {
   private trends: TrendItem[] = [];

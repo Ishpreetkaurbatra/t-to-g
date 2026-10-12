@@ -1,7 +1,8 @@
-import { Router, Request, Response } from 'express';
-import { store } from './store';
-import { analyzeTrendWithGemini } from './gemini';
-import { TREND_SOURCES } from './demoData';
+import { Router } from 'express';
+import type { Request, Response } from 'express';
+import { store } from './store.ts';
+import { analyzeTrendWithGemini } from './gemini.ts';
+import { TREND_SOURCES } from './demoData.ts';
 
 export const apiRouter = Router();
 
