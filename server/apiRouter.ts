@@ -1,256 +1,95 @@
 import { Router } from 'express';
-import type { Request, Response } from 'express';
-import { store } from './store.ts';
-import { analyzeTrendWithGemini } from './gemini.ts';
-import { TREND_SOURCES } from './demoData.ts';
+import { validate } from './middleware/validate.ts';
+import {
+  trendSearchSchema,
+  trendAnalyzeSchema,
+  businessMatchSchema,
+  businessPlanSchema,
+  businessProfileUpdateSchema,
+  expertReviewSchema,
+  experimentCreateSchema,
+  experimentResultSchema,
+} from './validators/index.ts';
+
+import { HealthController } from './controllers/healthController.ts';
+import { TrendController } from './controllers/trendController.ts';
+import { BusinessController } from './controllers/businessController.ts';
+import { PlanController } from './controllers/planController.ts';
+import { AlertController } from './controllers/alertController.ts';
+import { ExperimentController } from './controllers/experimentController.ts';
+import { SystemController } from './controllers/systemController.ts';
 
 export const apiRouter = Router();
 
-// TRENDS
-apiRouter.get('/trends', (req: Request, res: Response) => {
-  const { category, momentum, search } = req.query as {
-    category?: string;
-    momentum?: string;
-    search?: string;
-  };
-  const trends = store.getTrends(category, momentum, search);
-  res.json({ success: true, count: trends.length, data: trends });
-});
+// ==========================================
+// 1. HEALTH & SYSTEM DIAGNOSTICS
+// ==========================================
+apiRouter.get('/health', HealthController.getHealth);
+apiRouter.get('/status', HealthController.getStatus);
 
-apiRouter.get('/trends/:id', (req: Request, res: Response) => {
-  const trend = store.getTrendById(req.params.id);
-  if (!trend) {
-    res.status(404).json({ success: false, error: 'Trend not found' });
-    return;
-  }
-  res.json({ success: true, data: trend });
-});
+// ==========================================
+// 2. TREND ENDPOINTS
+// ==========================================
+// List trends (with query params: category, momentum, search)
+apiRouter.get('/trends', TrendController.getTrends);
 
-apiRouter.post('/trends/:id/save', (req: Request, res: Response) => {
-  const isSaved = store.toggleSaveTrend(req.params.id);
-  res.json({ success: true, is_saved: isSaved });
-});
+// Search trends with structured JSON payload & pagination
+apiRouter.post('/trends/search', validate({ body: trendSearchSchema }), TrendController.searchTrends);
 
-// TREND INTELLIGENCE & GEMINI INTEGRATION
-apiRouter.post('/trends/analyze', async (req: Request, res: Response) => {
-  try {
-    const { trendId, customTrend } = req.body;
-    let trend = trendId ? store.getTrendById(trendId) : null;
+// Analyze a trend with AI Engine
+apiRouter.post('/trends/analyze', validate({ body: trendAnalyzeSchema }), TrendController.analyzeTrend);
 
-    if (!trend && customTrend) {
-      trend = customTrend;
-    }
+// Retrieve trend alerts (both /trends/alerts and /alerts are supported)
+apiRouter.get('/trends/alerts', TrendController.getAlerts);
 
-    if (!trend) {
-      res.status(400).json({ success: false, error: 'Valid trend or trendId required' });
-      return;
-    }
+// Single trend by ID
+apiRouter.get('/trends/:id', TrendController.getTrendById);
 
-    const business = store.getBusinessProfile();
-    const analysis = await analyzeTrendWithGemini(
-      {
-        name: trend.name,
-        category: trend.category,
-        description: trend.description,
-        location: trend.location,
-        momentum: trend.momentum,
-        growthRate: trend.growth_rate,
-      },
-      {
-        name: business.name,
-        category: business.category,
-        location: `${business.city}, ${business.state}`,
-        targetCustomers: business.targetCustomers,
-        productsServices: business.productsServices,
-        businessSize: business.businessSize,
-        channels: business.channels,
-        goals: business.goals,
-      }
-    );
+// Save/bookmark trend toggle
+apiRouter.post('/trends/:id/save', TrendController.toggleSaveTrend);
 
-    res.json({
-      success: true,
-      trend,
-      business: {
-        id: business.id,
-        name: business.name,
-        category: business.category,
-        location: `${business.city}, ${business.state}`,
-      },
-      analysis,
-    });
-  } catch (error: any) {
-    console.error('Error analyzing trend:', error);
-    res.status(500).json({ success: false, error: error.message || 'Analysis failed' });
-  }
-});
+// ==========================================
+// 3. BUSINESS OPPORTUNITY & PLANNING
+// ==========================================
+// Business profile
+apiRouter.get('/business/profile', BusinessController.getProfile);
+apiRouter.put('/business/profile', validate({ body: businessProfileUpdateSchema }), BusinessController.updateProfile);
 
-// BUSINESS PROFILE
-apiRouter.get('/business/profile', (_req: Request, res: Response) => {
-  const profile = store.getBusinessProfile();
-  res.json({ success: true, data: profile });
-});
+// Business Opportunity Matching
+apiRouter.post('/business/match', validate({ body: businessMatchSchema }), BusinessController.matchOpportunities);
 
-apiRouter.put('/business/profile', (req: Request, res: Response) => {
-  const updated = store.updateBusinessProfile(req.body);
-  res.json({ success: true, data: updated });
-});
+// Generate/create Business Action Plan
+apiRouter.post('/business/plan', validate({ body: businessPlanSchema }), BusinessController.createPlan);
 
-apiRouter.get('/business/opportunities', (_req: Request, res: Response) => {
-  const opportunities = store.getTopOpportunities();
-  res.json({ success: true, data: opportunities });
-});
+// Top ranked opportunities for business
+apiRouter.get('/business/opportunities', BusinessController.getOpportunities);
 
-// ACTION PLANS
-apiRouter.get('/action-plans', (req: Request, res: Response) => {
-  const { status } = req.query as { status?: string };
-  const plans = store.getActionPlans(status);
-  res.json({ success: true, count: plans.length, data: plans });
-});
+// ==========================================
+// 4. ACTION PLANS & EXPERT REVIEWS
+// ==========================================
+apiRouter.get('/action-plans', PlanController.getActionPlans);
+apiRouter.get('/action-plans/:id', PlanController.getActionPlanById);
+apiRouter.post('/action-plans', validate({ body: businessPlanSchema }), PlanController.createActionPlan);
 
-apiRouter.get('/action-plans/:id', (req: Request, res: Response) => {
-  const plan = store.getActionPlanById(req.params.id);
-  if (!plan) {
-    res.status(404).json({ success: false, error: 'Action plan not found' });
-    return;
-  }
-  res.json({ success: true, data: plan });
-});
+apiRouter.get('/expert/pending', PlanController.getPendingReviews);
+apiRouter.post('/expert/review', validate({ body: expertReviewSchema }), PlanController.submitExpertReview);
 
-apiRouter.post('/action-plans', (req: Request, res: Response) => {
-  const {
-    trendId,
-    trendName,
-    category,
-    objective,
-    whyThisTrend,
-    recommendedAction,
-    targetCustomer,
-    productServiceIdea,
-    marketingApproach,
-    channel,
-    pilot,
-    timeline,
-    estimatedEffort,
-    expectedOpportunity,
-    risks,
-    successMetrics,
-    testMeasureLearn,
-  } = req.body;
+// ==========================================
+// 5. SMART ALERTS
+// ==========================================
+apiRouter.get('/alerts', AlertController.getAlerts);
+apiRouter.post('/alerts/:id/dismiss', AlertController.dismissAlert);
 
-  const business = store.getBusinessProfile();
+// ==========================================
+// 6. EXPERIMENTS (TEST → MEASURE → LEARN → ADAPT)
+// ==========================================
+apiRouter.get('/experiments', ExperimentController.getExperiments);
+apiRouter.post('/experiments', validate({ body: experimentCreateSchema }), ExperimentController.createExperiment);
+apiRouter.post('/experiments/:id/result', validate({ body: experimentResultSchema }), ExperimentController.updateExperimentResult);
 
-  const newPlan = store.createActionPlan({
-    businessId: business.id,
-    trendId: trendId || 'tr-custom',
-    trendName: trendName || 'Custom Trend Strategy',
-    category: category || business.category,
-    objective: objective || `Pilot ${trendName} to drive customer footfall and increase ticket size.`,
-    whyThisTrend: whyThisTrend || 'High consumer momentum in regional trade corridor.',
-    recommendedAction: recommendedAction || 'Formulate 14-day prototype and feature on VIP channel.',
-    targetCustomer: targetCustomer || business.targetCustomers,
-    productServiceIdea: productServiceIdea || 'Limited-edition trial bundle',
-    marketingApproach: marketingApproach || 'Targeted local social reel + counter display',
-    channel: channel || 'In-store + WhatsApp',
-    pilot: pilot || 'Daily limited quantity test for 14 days',
-    timeline: timeline || '2 weeks setup & pilot',
-    estimatedEffort: estimatedEffort || 'Medium',
-    expectedOpportunity: expectedOpportunity || 'High',
-    risks: risks || ['Supply volatility', 'Adoption friction'],
-    successMetrics: successMetrics || ['Sell-through > 75%', 'Repeat purchase > 20%'],
-    testMeasureLearn: testMeasureLearn || {
-      test: 'Launch 2 variants for 14 days',
-      measure: 'Track margin and customer feedback score',
-      learn: 'Identify highest demand option',
-      adapt: 'Scale top performer to standard catalog',
-    },
-    validationStatus: 'PENDING EXPERT REVIEW',
-  });
-
-  res.status(201).json({ success: true, data: newPlan });
-});
-
-// EXPERT REVIEW WORKFLOW
-apiRouter.get('/expert/pending', (_req: Request, res: Response) => {
-  const pending = store.getActionPlans('PENDING EXPERT REVIEW');
-  res.json({ success: true, count: pending.length, data: pending });
-});
-
-apiRouter.post('/expert/review', (req: Request, res: Response) => {
-  const { planId, decision, comment, riskNote, suggestedModification, confidence, expertName, expertTitle } = req.body;
-
-  if (!planId || !decision) {
-    res.status(400).json({ success: false, error: 'planId and decision are required' });
-    return;
-  }
-
-  const updated = store.submitExpertReview(planId, {
-    expertId: 'exp-current-session',
-    expertName: expertName || 'Dr. Vikram Malhotra, Retail Growth Strategist',
-    expertTitle: expertTitle || 'Senior Partner, Apex Retail Advisory (18+ yrs)',
-    decision: decision as 'APPROVED' | 'NEEDS REVISION' | 'REJECTED',
-    comment: comment || 'Strategy is sound with clear test boundaries.',
-    riskNote: riskNote || 'Monitor supplier turnaround times.',
-    suggestedModification: suggestedModification || 'Include tasting survey at cash register.',
-    confidence: confidence || 94,
-  });
-
-  if (!updated) {
-    res.status(404).json({ success: false, error: 'Plan not found' });
-    return;
-  }
-
-  res.json({ success: true, data: updated });
-});
-
-// SMART ALERTS
-apiRouter.get('/alerts', (_req: Request, res: Response) => {
-  const alerts = store.getAlerts();
-  res.json({ success: true, data: alerts });
-});
-
-apiRouter.post('/alerts/:id/dismiss', (req: Request, res: Response) => {
-  const dismissed = store.dismissAlert(req.params.id);
-  res.json({ success: dismissed });
-});
-
-// EXPERIMENTS (TEST → MEASURE → LEARN → ADAPT)
-apiRouter.get('/experiments', (_req: Request, res: Response) => {
-  const experiments = store.getExperiments();
-  res.json({ success: true, data: experiments });
-});
-
-apiRouter.post('/experiments', (req: Request, res: Response) => {
-  const business = store.getBusinessProfile();
-  const newExp = store.createExperiment({
-    ...req.body,
-    businessId: business.id,
-  });
-  res.status(201).json({ success: true, data: newExp });
-});
-
-apiRouter.post('/experiments/:id/result', (req: Request, res: Response) => {
-  const updated = store.updateExperimentResult(req.params.id, req.body);
-  if (!updated) {
-    res.status(404).json({ success: false, error: 'Experiment not found' });
-    return;
-  }
-  res.json({ success: true, data: updated });
-});
-
-// TREND SOURCES REGISTRY
-apiRouter.get('/sources', (_req: Request, res: Response) => {
-  res.json({ success: true, data: TREND_SOURCES });
-});
-
-// ANALYTICS
-apiRouter.get('/analytics', (_req: Request, res: Response) => {
-  const analytics = store.getAnalytics();
-  res.json({ success: true, data: analytics });
-});
-
-// DEMO RESET
-apiRouter.post('/demo/reset', (_req: Request, res: Response) => {
-  store.reset();
-  res.json({ success: true, message: 'Demo data successfully reset to FreshBite Café initial state' });
-});
+// ==========================================
+// 7. SYSTEM SOURCES & ANALYTICS
+// ==========================================
+apiRouter.get('/sources', SystemController.getSources);
+apiRouter.get('/analytics', SystemController.getAnalytics);
+apiRouter.post('/demo/reset', SystemController.resetDemo);

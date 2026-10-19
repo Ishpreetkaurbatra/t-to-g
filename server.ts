@@ -1,24 +1,37 @@
-import express from 'express';
-import path from 'path';
-import dotenv from 'dotenv';
-import { apiRouter } from './server/apiRouter.ts';
+import { app } from './server/app.ts';
+import { config, getSafeConfigDiagnostics } from './server/config.ts';
 
-dotenv.config();
+const PORT = config.PORT;
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(express.json());
-app.use('/api', apiRouter);
-
-// Serve Vite build in production
-const distPath = path.resolve(process.cwd(), 'dist');
-app.use(express.static(distPath));
-
-app.get('*', (_req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
+const server = app.listen(PORT, () => {
+  const diag = getSafeConfigDiagnostics();
+  console.log(`\n==================================================`);
+  console.log(`  🚀 T→G (Trend to Growth) Backend Running`);
+  console.log(`  📡 Port:        http://localhost:${PORT}`);
+  console.log(`  🩺 Health:      http://localhost:${PORT}/api/health`);
+  console.log(`  📊 Status:      http://localhost:${PORT}/api/status`);
+  console.log(`  🤖 AI Provider: ${diag.aiEngine.provider} (isMock: ${!diag.aiEngine.hasApiKey && !diag.aiEngine.hasExternalUrl})`);
+  console.log(`  💾 Database:    ${diag.database.provider}`);
+  console.log(`  🌍 Environment: ${diag.nodeEnv}`);
+  console.log(`==================================================\n`);
 });
 
-app.listen(PORT, () => {
-  console.log(`T→G server running on port ${PORT}`);
-});
+// Graceful shutdown handling
+const shutdown = (signal: string) => {
+  console.log(`\nReceived ${signal}. Gracefully closing server...`);
+  server.close(() => {
+    console.log('Server closed successfully.');
+    process.exit(0);
+  });
+
+  // Force close if graceful shutdown hangs
+  setTimeout(() => {
+    console.error('Forcefully terminating process after timeout.');
+    process.exit(1);
+  }, 5000).unref();
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+export { server };

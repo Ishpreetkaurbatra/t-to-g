@@ -1,12 +1,7 @@
-import express from 'express';
+import { app } from '../server/app.ts';
 import { apiRouter } from '../server/apiRouter.ts';
 
-const app = express();
-
-app.use(express.json());
-
-// Support both /api/* routes and stripped paths
-app.use('/api', apiRouter);
+// In serverless environments, path may have /api stripped
 app.use('/', apiRouter);
 
 export default app;
