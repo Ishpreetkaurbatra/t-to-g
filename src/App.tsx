@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { MobileDeviceFrame } from './components/MobileDeviceFrame';
-import { MobileStatusBar } from './components/MobileStatusBar';
 import { MobileHeader } from './components/MobileHeader';
 import { MobileBottomNav } from './components/MobileBottomNav';
-import { DemoDataBadge } from './components/DemoDataBadge';
 import { JudgeDemoBanner } from './components/JudgeDemoBanner';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
 import { OnboardingModal } from './components/OnboardingModal';
@@ -23,28 +21,28 @@ import { BusinessProfileView } from './views/BusinessProfileView';
 import { TrendSourcesView } from './views/TrendSourcesView';
 import { AdminView } from './views/AdminView';
 import { SettingsView } from './views/SettingsView';
-import { IntroVideoGraphic } from './components/IntroVideoGraphic';
+import { GrowthTransformationIntro } from './components/GrowthTransformationIntro';
 import { CheckCircle2, Compass, LayoutDashboard, Radio } from 'lucide-react';
 
 const AppContent: React.FC = () => {
   const { currentView, setCurrentView, toastMessage } = useApp();
-  const [isPhoneFrameMode, setIsPhoneFrameMode] = useState<boolean>(() => {
-    return typeof window !== 'undefined' ? window.innerWidth >= 768 : false;
-  });
+  
+  // Default to spacious uncrowded desktop view; phone frame available via toggle
+  const [isPhoneFrameMode, setIsPhoneFrameMode] = useState<boolean>(false);
 
-  // Video Graphic at the start of the application
-  const [showVideoGraphic, setShowVideoGraphic] = useState<boolean>(() => {
+  // Growth transformation intro animation plays at start of website
+  const [showGrowthIntro, setShowGrowthIntro] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    return !sessionStorage.getItem('ttog_video_seen');
+    return !sessionStorage.getItem('ttog_intro_seen');
   });
 
-  const handleFinishVideoGraphic = () => {
+  const handleFinishGrowthIntro = () => {
     try {
-      sessionStorage.setItem('ttog_video_seen', 'true');
+      sessionStorage.setItem('ttog_intro_seen', 'true');
     } catch {
       // ignore
     }
-    setShowVideoGraphic(false);
+    setShowGrowthIntro(false);
     if (currentView !== 'process') {
       setCurrentView('process');
     }
@@ -64,22 +62,20 @@ const AppContent: React.FC = () => {
   if (currentView === 'landing') {
     return (
       <div className="min-h-screen bg-[#eaf0f8] text-slate-900 flex flex-col font-sans select-none">
-        <DemoDataBadge />
-        <JudgeDemoBanner />
         <LandingPage />
         <GlobalSearchModal />
         <OnboardingModal />
 
-        {/* Video Graphic Modal */}
-        <IntroVideoGraphic
-          isOpen={showVideoGraphic}
-          onComplete={handleFinishVideoGraphic}
-          onSkip={handleFinishVideoGraphic}
+        {/* Growth Transformation Video Animation Modal */}
+        <GrowthTransformationIntro
+          isOpen={showGrowthIntro}
+          onComplete={handleFinishGrowthIntro}
+          onSkip={handleFinishGrowthIntro}
         />
 
         {toastMessage && (
           <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-3 duration-200">
-            <div className="bg-[#eaf0f8] text-slate-900 px-4 py-2.5 rounded-2xl nm-raised text-xs font-bold flex items-center gap-2">
+            <div className="bg-[#eaf0f8] text-slate-900 px-4 py-2.5 rounded-2xl nm-raised text-xs font-bold flex items-center gap-2 border border-emerald-400/30">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               <span>{toastMessage}</span>
             </div>
@@ -89,37 +85,31 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // Mobile Application Shell with Neumorphism Theme
+  // Main Application Shell
   return (
     <MobileDeviceFrame
       isPhoneFrameMode={isPhoneFrameMode}
       onTogglePhoneFrame={() => setIsPhoneFrameMode(!isPhoneFrameMode)}
     >
-      {/* Intro Video Graphic at the start of the application */}
-      <IntroVideoGraphic
-        isOpen={showVideoGraphic}
-        onComplete={handleFinishVideoGraphic}
-        onSkip={handleFinishVideoGraphic}
+      {/* Golden Arrow Growth Transformation Animation at start */}
+      <GrowthTransformationIntro
+        isOpen={showGrowthIntro}
+        onComplete={handleFinishGrowthIntro}
+        onSkip={handleFinishGrowthIntro}
       />
 
-      {/* Phone Status Bar */}
-      <MobileStatusBar />
-
-      {/* Demo Signal Notice Pill */}
-      <DemoDataBadge />
-
-      {/* Judge Walkthrough Banner */}
-      <JudgeDemoBanner />
-
-      {/* Mobile Header with T-to-G Logo and Video graphic trigger */}
+      {/* Uncrowded Top Navigation Header */}
       <MobileHeader
         isPhoneFrameMode={isPhoneFrameMode}
         onTogglePhoneFrame={() => setIsPhoneFrameMode(!isPhoneFrameMode)}
-        onOpenVideoGraphic={() => setShowVideoGraphic(true)}
+        onOpenVideoGraphic={() => setShowGrowthIntro(true)}
       />
 
-      {/* Neumorphic Mode Segment Pill Bar (Blue & Green Accents) */}
-      <div className="px-3.5 pt-2 pb-1 shrink-0 bg-[#eaf0f8] select-none">
+      {/* Floating Judge Walkthrough Control (Unobtrusive floating pill) */}
+      <JudgeDemoBanner />
+
+      {/* Mobile-only Segment Switcher (Hidden on desktop to avoid duplicate header clutter) */}
+      <div className="lg:hidden px-3.5 pt-2 pb-1 shrink-0 bg-[#eaf0f8] select-none">
         <div className="nm-flat rounded-2xl p-1 flex items-center gap-1">
           <button
             onClick={() => setCurrentView('process')}
@@ -130,7 +120,7 @@ const AppContent: React.FC = () => {
             }`}
           >
             <Compass className="w-3.5 h-3.5 text-blue-600" />
-            <span>Trend Process</span>
+            <span>Process</span>
           </button>
 
           <button
@@ -159,8 +149,8 @@ const AppContent: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Screen Content Viewport (Scrollable with clean neumorphic canvas) */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-3.5 sm:p-4 space-y-4 bg-[#eaf0f8]">
+      {/* Main Spacious Viewport (Uncluttered, comfortable padding & breathing room) */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 space-y-6 bg-[#eaf0f8]">
         {currentView === 'process' && <TrendProcessView />}
         {currentView === 'dashboard' && <DashboardView />}
         {currentView === 'trend-feed' && <TrendFeedView />}
@@ -175,21 +165,21 @@ const AppContent: React.FC = () => {
         {currentView === 'trend-sources' && <TrendSourcesView />}
         {currentView === 'admin' && <AdminView />}
         {currentView === 'settings' && <SettingsView />}
-      </div>
+      </main>
 
-      {/* Mobile Bottom Navigation */}
+      {/* Bottom Navigation for Mobile */}
       <MobileBottomNav />
 
-      {/* Overlays & Modals */}
+      {/* Modals */}
       <GlobalSearchModal />
       <OnboardingModal />
 
-      {/* Mobile Toast */}
+      {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-3 duration-200 w-11/12 max-w-sm">
-          <div className="bg-[#eaf0f8] text-slate-900 px-4 py-2.5 rounded-2xl nm-raised text-xs font-bold flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
-            <span className="truncate">{toastMessage}</span>
+        <div className="fixed bottom-20 right-6 z-50 animate-in fade-in slide-in-from-bottom-3 duration-200 pointer-events-none">
+          <div className="bg-[#eaf0f8] text-slate-900 px-4 py-2.5 rounded-2xl nm-raised text-xs font-bold flex items-center gap-2 border border-emerald-400/30 shadow-lg">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{toastMessage}</span>
           </div>
         </div>
       )}
@@ -197,10 +187,12 @@ const AppContent: React.FC = () => {
   );
 };
 
-export default function App() {
+export const App: React.FC = () => {
   return (
     <AppProvider>
       <AppContent />
     </AppProvider>
   );
-}
+};
+
+export default App;

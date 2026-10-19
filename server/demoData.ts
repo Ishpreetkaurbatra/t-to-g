@@ -16,6 +16,11 @@ export interface TrendItem {
   business_relevance: number;
   opportunity_score: number;
   is_saved?: boolean;
+  image?: string;
+  shortHeadline?: string;
+  actionPrompt?: string;
+  trendStatus?: 'RISING' | 'EMERGING' | 'FAST GROWING' | 'WATCH' | 'LOCAL SIGNAL';
+  riskLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
 }
 
 export interface BusinessProfile {

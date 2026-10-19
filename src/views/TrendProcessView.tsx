@@ -363,21 +363,21 @@ export const TrendProcessView: React.FC = () => {
               </button>
             </div>
 
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">
-                Business / Brand Name
-              </label>
-              <input
-                type="text"
-                required
-                value={profileData.name}
-                onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                placeholder="Enter business or brand name"
-                className="w-full nm-inset-sm px-3.5 py-2.5 rounded-2xl text-xs text-slate-900 font-semibold focus:outline-none"
-              />
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Business / Brand Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={profileData.name}
+                  onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                  placeholder="Enter business or brand name"
+                  className="w-full nm-inset-sm px-3.5 py-2.5 rounded-2xl text-xs text-slate-900 font-semibold focus:outline-none"
+                />
+              </div>
 
-            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">
                   Category
@@ -425,46 +425,46 @@ export const TrendProcessView: React.FC = () => {
                   className="w-full nm-inset-sm px-3.5 py-2.5 rounded-2xl text-xs text-slate-900 font-semibold focus:outline-none"
                 />
               </div>
-            </div>
 
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">
-                Target Customers
-              </label>
-              <input
-                type="text"
-                required
-                value={profileData.targetCustomers}
-                onChange={(e) => setProfileData({ ...profileData, targetCustomers: e.target.value })}
-                placeholder="Describe your ideal customers (e.g. college youth, working parents)"
-                className="w-full nm-inset-sm px-3.5 py-2.5 rounded-2xl text-xs text-slate-900 font-semibold focus:outline-none"
-              />
-            </div>
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Target Customers
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={profileData.targetCustomers}
+                  onChange={(e) => setProfileData({ ...profileData, targetCustomers: e.target.value })}
+                  placeholder="Describe ideal customers (e.g. college students)"
+                  className="w-full nm-inset-sm px-3.5 py-2.5 rounded-2xl text-xs text-slate-900 font-semibold focus:outline-none"
+                />
+              </div>
 
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">
-                Products & Offerings
-              </label>
-              <textarea
-                rows={2}
-                value={profileData.productsServices}
-                onChange={(e) => setProfileData({ ...profileData, productsServices: e.target.value })}
-                placeholder="Key items, specialties, or services you offer"
-                className="w-full nm-inset-sm px-3.5 py-2.5 rounded-2xl text-xs text-slate-900 font-semibold focus:outline-none resize-none"
-              />
-            </div>
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Products & Offerings
+                </label>
+                <textarea
+                  rows={2}
+                  value={profileData.productsServices}
+                  onChange={(e) => setProfileData({ ...profileData, productsServices: e.target.value })}
+                  placeholder="Key items, specialties, or services you offer"
+                  className="w-full nm-inset-sm px-3.5 py-2.5 rounded-2xl text-xs text-slate-900 font-semibold focus:outline-none resize-none"
+                />
+              </div>
 
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">
-                Primary Business Goal
-              </label>
-              <input
-                type="text"
-                value={profileData.businessGoal}
-                onChange={(e) => setProfileData({ ...profileData, businessGoal: e.target.value })}
-                placeholder="e.g. Boost afternoon sales, introduce high-margin options"
-                className="w-full nm-inset-sm px-3.5 py-2.5 rounded-2xl text-xs text-slate-900 font-semibold focus:outline-none"
-              />
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Primary Business Goal
+                </label>
+                <input
+                  type="text"
+                  value={profileData.businessGoal}
+                  onChange={(e) => setProfileData({ ...profileData, businessGoal: e.target.value })}
+                  placeholder="e.g. Boost afternoon sales, high-margin items"
+                  className="w-full nm-inset-sm px-3.5 py-2.5 rounded-2xl text-xs text-slate-900 font-semibold focus:outline-none"
+                />
+              </div>
             </div>
 
             {/* Launch Action */}
@@ -564,8 +564,8 @@ export const TrendProcessView: React.FC = () => {
             </div>
           )}
 
-          {/* Trend Signals Radar Cards List */}
-          <div className="space-y-3">
+          {/* Trend Signals Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             {filteredTrends.map((trend) => {
               const isSelected = selectedTrendId === trend.id;
 
